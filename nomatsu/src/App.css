@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .App-logo {
@@ -35,4 +37,36 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.manga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.manga-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.manga-item img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.manga-item h3 {
+  margin-top: 10px;
+  font-size: 16px;
 }
