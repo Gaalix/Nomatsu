@@ -7,9 +7,14 @@ import {
   Radio,
   RadioGroup,
   Stack,
-  Text,
   VStack,
+  Text,
+  Flex,
+  useColorModeValue,
+  SlideFade,
 } from '@chakra-ui/react';
+import { ArrowForwardIcon, ArrowBackIcon } from '@chakra-ui/icons';
+import { useColorMode } from '../hooks/useColorMode';
 
 interface SetupWizardProps {
   onComplete: () => void;
@@ -17,10 +22,10 @@ interface SetupWizardProps {
 
 const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
-  const [downloadFolder, setDownloadFolder] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [theme, setTheme] = useState('light');
+  const [downloadFolder, setDownloadFolder] = useState('');
+  const { isDarkMode, toggleColorMode } = useColorMode();
 
   const handleNext = () => {
     setStep(step + 1);
@@ -35,59 +40,101 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     onComplete();
   };
 
+  const bgColor = useColorModeValue('blue.50', 'blue.900');
+  const textColor = useColorModeValue('blue.800', 'blue.100');
+  const cardBgColor = useColorModeValue('white', 'gray.800');
+
+  const Logo = () => (
+    <Flex align="center" mb={8} justify="center">
+      <Box
+        as="span"
+        fontWeight="extrabold"
+        fontSize="4xl"
+        bgGradient="linear(to-r, blue.400, teal.500)"
+        bgClip="text"
+        border="4px solid"
+        borderColor="blue.400"
+        borderRadius="full"
+        p={2}
+        mr={2}
+      >
+        N
+      </Box>
+      <Text fontSize="3xl" fontWeight="bold" letterSpacing="wider">
+        omatsu
+      </Text>
+    </Flex>
+  );
+
   return (
-    <Box maxWidth="500px" margin="0 auto" padding={5}>
-      <Heading as="h1" size="xl" mb={6}>Welcome to Nomatsu</Heading>
-      <VStack spacing={6} align="stretch">
-        {step === 1 && (
-          <Box>
-            <Heading as="h2" size="lg" mb={4}>Select Download Folder</Heading>
-            <Input
-              value={downloadFolder}
-              onChange={(e) => setDownloadFolder(e.target.value)}
-              placeholder="Enter folder path"
-              mb={4}
-            />
-            <Button onClick={() => alert('Open folder dialog')}>Browse</Button>
-          </Box>
-        )}
-        {step === 2 && (
-          <Box>
-            <Heading as="h2" size="lg" mb={4}>MangaDex Login</Heading>
-            <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-              mb={4}
-            />
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-            />
-          </Box>
-        )}
-        {step === 3 && (
-          <Box>
-            <Heading as="h2" size="lg" mb={4}>Choose Theme</Heading>
-            <RadioGroup onChange={setTheme} value={theme}>
-              <Stack direction="row">
-                <Radio value="light">Light</Radio>
-                <Radio value="dark">Dark</Radio>
-              </Stack>
-            </RadioGroup>
-          </Box>
-        )}
-      </VStack>
-      <Stack direction="row" justifyContent="space-between" mt={6}>
-        {step > 1 && <Button onClick={handlePrevious}>Previous</Button>}
-        {step < 3 ? (
-          <Button onClick={handleNext} ml="auto">Next</Button>
-        ) : (
-          <Button onClick={handleFinish} ml="auto" colorScheme="green">Finish</Button>
-        )}
-      </Stack>
+    <Box
+      height="100vh"
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      bg={bgColor}
+      color={textColor}
+    >
+      <Box maxWidth="500px" width="100%" p={8} borderRadius="lg" boxShadow="xl" bg={cardBgColor}>
+        <Logo />
+        <SlideFade in={true} offsetY="20px">
+          {step === 1 && (
+            <VStack spacing={6} align="stretch">
+              <Heading as="h2" size="lg" mb={4} textAlign="center">Choose Theme</Heading>
+              <RadioGroup onChange={toggleColorMode} value={isDarkMode ? 'dark' : 'light'}>
+                <Stack direction="row" spacing={8} justify="center">
+                  <Radio value="light">Light</Radio>
+                  <Radio value="dark">Dark</Radio>
+                </Stack>
+              </RadioGroup>
+            </VStack>
+          )}
+          {step === 2 && (
+            <VStack spacing={6} align="stretch">
+              <Heading as="h2" size="lg" mb={4} textAlign="center">MangaDex Login</Heading>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+              />
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+              />
+            </VStack>
+          )}
+          {step === 3 && (
+            <VStack spacing={6} align="stretch">
+              <Heading as="h2" size="lg" mb={4} textAlign="center">Select Download Folder</Heading>
+              <Input
+                value={downloadFolder}
+                onChange={(e) => setDownloadFolder(e.target.value)}
+                placeholder="Enter folder path"
+              />
+              <Button onClick={() => alert('Open folder dialog')} colorScheme="blue">Browse</Button>
+            </VStack>
+          )}
+        </SlideFade>
+        <Flex justifyContent="space-between" mt={8}>
+          {step > 1 && (
+            <Button leftIcon={<ArrowBackIcon />} onClick={handlePrevious} variant="outline">
+              Previous
+            </Button>
+          )}
+          {step < 3 ? (
+            <Button rightIcon={<ArrowForwardIcon />} onClick={handleNext} ml="auto" colorScheme="blue">
+              Next
+            </Button>
+          ) : (
+            <Button onClick={handleFinish} ml="auto" colorScheme="green">
+              Finish
+            </Button>
+          )}
+        </Flex>
+      </Box>
     </Box>
   );
 };
