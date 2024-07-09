@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -12,10 +15,13 @@
     "@types/react-dom": "^18.3.0",
     "axios": "^1.7.2",
     "electron-is-dev": "^2.0.0",
+    "framer-motion": "^11.2.14",
+    "lodash.debounce": "^4.0.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
     "react-scripts": "5.0.1",
+    "react-window": "^1.8.10",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
@@ -48,6 +54,8 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/react-window": "^1.8.8",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^31.1.0",

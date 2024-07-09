@@ -1,8 +1,10 @@
 import React, { useCallback, useRef } from 'react';
+import { Box, Grid, Image, Text, Button } from '@chakra-ui/react';
 import { useMangaList } from '../hooks/useMangaList';
+import { SortOrder } from '../api/mangaApi';
 
 const MangaList: React.FC = () => {
-  const { mangas, isLoading, error, hasMore, loadMore } = useMangaList();
+  const { mangas, isLoading, error, hasMore, loadMore, sortOrder, changeSortOrder } = useMangaList();
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastMangaElementRef = useCallback((node: HTMLDivElement | null) => {
@@ -16,27 +18,37 @@ const MangaList: React.FC = () => {
     if (node) observer.current.observe(node);
   }, [isLoading, hasMore, loadMore]);
 
-  if (error) return <div>{error}</div>;
+  const toggleSortOrder = () => {
+    const newSortOrder: SortOrder = sortOrder === 'latest' ? 'popular' : 'latest';
+    changeSortOrder(newSortOrder);
+  };
+
+  if (error) {
+    return <Text color="red.500">{error}</Text>;
+  }
 
   return (
-    <div className="manga-list">
-      <h1>Latest Manga</h1>
-      <div className="manga-grid">
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Button onClick={toggleSortOrder}>
+          Sort by: {sortOrder === 'latest' ? 'Latest' : 'Popular'}
+        </Button>
+      </Box>
+      <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
         {mangas.map((manga, index) => (
-          <div 
+          <Box 
             key={manga.id} 
-            className="manga-item"
+            textAlign="center"
             ref={index === mangas.length - 1 ? lastMangaElementRef : null}
           >
-            <img src={manga.coverArt} alt={manga.title} />
-            <h3>{manga.title}</h3>
-          </div>
+            <Image src={manga.coverArt} alt={manga.title} objectFit="cover" height="300px" width="100%" borderRadius="md" />
+            <Text mt={2} fontWeight="bold">{manga.title}</Text>
+          </Box>
         ))}
-      </div>
-      {isLoading && <div>Loading more...</div>}
-      {!hasMore && <div>No more manga to load</div>}
-    </div>
+      </Grid>
+      {isLoading && <Text mt={4} textAlign="center">Loading more manga...</Text>}
+    </Box>
   );
-};
+}
 
 export default MangaList;

@@ -1,22 +1,34 @@
 import axios from 'axios';
 import { Manga } from '../types/Manga';
 
-export const fetchMangaList = async (offset: number, limit: number): Promise<Manga[]> => {
-  const { data } = await axios.get(`https://api.mangadex.dev/manga`, {
-    params: {
-      limit,
-      offset,
-      order: { latestUploadedChapter: 'desc' },
-      includes: ['cover_art']
-    }
-  });
+export type SortOrder = 'latest' | 'popular';
 
-  return data.data.map((manga: any) => {
-    const coverFile = manga.relationships.find((rel: any) => rel.type === 'cover_art')?.attributes?.fileName;
-    return {
+export const fetchMangaList = async (offset: number, limit: number, sortOrder: SortOrder = 'latest'): Promise<Manga[]> => {
+  const orderParam = sortOrder === 'latest' 
+    ? { updatedAt: 'desc' } 
+    : { followedCount: 'desc' };
+
+  try {
+    const { data } = await axios.get(`https://api.mangadex.dev/manga`, {
+      params: {
+        limit,
+        offset,
+        order: orderParam,
+        includes: ['cover_art'],
+        contentRating: ['safe', 'suggestive'],
+        hasAvailableChapters: true
+      }
+    });
+
+    return data.data.map((manga: any) => ({
       id: manga.id,
       title: manga.attributes.title.en || Object.values(manga.attributes.title)[0],
-      coverArt: coverFile ? `https://uploads.mangadex.dev/covers/${manga.id}/${coverFile}` : ''
-    };
-  });
+      coverArt: manga.relationships.find((rel: any) => rel.type === 'cover_art')?.attributes?.fileName
+        ? `https://uploads.mangadex.org/covers/${manga.id}/${manga.relationships.find((rel: any) => rel.type === 'cover_art').attributes.fileName}`
+        : ''
+    }));
+  } catch (error) {
+    console.error('Error fetching manga:', error);
+    throw error;
+  }
 };

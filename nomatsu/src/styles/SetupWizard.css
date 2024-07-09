@@ -1,0 +1,47 @@
+.setup-wizard {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .setup-content {
+    margin-bottom: 20px;
+  }
+  
+  .setup-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .setup-step input[type="text"],
+  .setup-step input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+  }
+  
+  .theme-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .setup-navigation {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
