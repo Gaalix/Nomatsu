@@ -8,64 +8,127 @@ export const useMangaList = () => {
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('latest');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('latestUploadedChapter');
+  const [contentRating, setContentRating] = useState<string[]>(['safe']);
+  const [tags, setTags] = useState<Record<string, number>>({});
+  const [publicationStatus, setPublicationStatus] = useState<string>('ongoing');
   const cachedMangas = useRef<Record<string, Manga[]>>({});
   const lastFetchTime = useRef<number>(0);
+  const isMounted = useRef(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isResetting, setIsResetting] = useState(false);
+  const initialLoadTriggered = useRef(false);
+  const lastOptions = useRef('');
+
+  useEffect(() => {
+    console.log('useMangaList mounted');
+    isMounted.current = true;
+    return () => {
+      console.log('useMangaList unmounted');
+      isMounted.current = false;
+    };
+  }, []);
 
   const loadMoreMangas = useCallback(async () => {
     if (isLoading || !hasMore) return;
-    
-    const now = Date.now();
-    if (now - lastFetchTime.current < 1000) {
-      console.log('Throttling API call');
-      return;
-    }
-    
+
     setIsLoading(true);
-    lastFetchTime.current = now;
+    setError(null);
 
-    const cacheKey = `${sortOrder}-${offset}`;
-    if (cachedMangas.current[cacheKey]) {
-      setMangas(prevMangas => [...prevMangas, ...cachedMangas.current[cacheKey]]);
-      setOffset(prevOffset => prevOffset + 20);
-      setIsLoading(false);
-      return;
-    }
+    const fetchData = async () => {
+      const currentOffset = offset;
+      const currentSortOrder = sortOrder;
+      const currentContentRating = contentRating;
+      const currentTags = tags;
+      const currentPublicationStatus = publicationStatus;
 
-    try {
-      const mangaList = await fetchMangaList(offset, 20, sortOrder);
-      cachedMangas.current[cacheKey] = mangaList;
-      setMangas(prevMangas => [...prevMangas, ...mangaList]);
-      setOffset(prevOffset => prevOffset + 20);
-      setHasMore(mangaList.length === 20);
-    } catch (error) {
-      console.error('Error in loadMoreMangas:', error);
-      setError('Failed to fetch manga. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [offset, isLoading, hasMore, sortOrder]);
+      try {
+        const newMangas = await fetchMangaList(
+          currentOffset,
+          20,
+          currentSortOrder,
+          currentContentRating,
+          currentTags,
+          currentPublicationStatus
+        );
 
-  const changeSortOrder = useCallback((newSortOrder: SortOrder) => {
-    if (newSortOrder !== sortOrder) {
-      setSortOrder(newSortOrder);
-      setMangas([]);
-      setOffset(0);
-      setHasMore(true);
-      setIsLoading(false);
-      lastFetchTime.current = 0;
-    }
-  }, [sortOrder]);
+        if (isMounted.current) {
+          setMangas(prevMangas => [...prevMangas, ...newMangas]);
+          setOffset(prevOffset => prevOffset + 20);
+          setHasMore(newMangas.length === 20);
+          setError(null);
+          setIsFirstLoad(false);
+        }
+      } catch (error) {
+        console.error('Error in loadMoreMangas:', error);
+        if (isMounted.current) {
+          setError('Failed to fetch manga. Please try adjusting your filters or try again later.');
+          setIsFirstLoad(false);
+        }
+      } finally {
+        if (isMounted.current) {
+          setIsLoading(false);
+          setIsResetting(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [offset, sortOrder, contentRating, tags, publicationStatus, hasMore, isLoading]);
+
+  const resetAndLoad = useCallback(() => {
+    setIsResetting(true);
+    setOffset(0);
+    setMangas([]);
+    setHasMore(true);
+    setError(null);
+    setIsFirstLoad(true);
+    cachedMangas.current = {}; // Clear the cache
+
+    // Immediately trigger a new fetch
+    fetchMangaList(0, 20, sortOrder, contentRating, tags, publicationStatus)
+      .then((newMangas) => {
+        setMangas(newMangas);
+        setOffset(20);
+        setHasMore(newMangas.length === 20);
+        setError(null);
+        setIsFirstLoad(false);
+      })
+      .catch((error) => {
+        console.error('Error in resetAndLoad:', error);
+        setError('Failed to fetch manga. Please try adjusting your filters or try again later.');
+        setIsFirstLoad(false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setIsResetting(false);
+      });
+  }, [sortOrder, contentRating, tags, publicationStatus]);
 
   useEffect(() => {
-    loadMoreMangas();
-  }, [sortOrder]);
-
-  const loadMore = useCallback(() => {
-    if (!isLoading && hasMore) {
+    if (isFirstLoad && !initialLoadTriggered.current) {
+      console.log('Initial load effect triggered');
+      initialLoadTriggered.current = true;
       loadMoreMangas();
     }
-  }, [isLoading, hasMore, loadMoreMangas]);
+  }, [isFirstLoad, loadMoreMangas]);
 
-  return { mangas, isLoading, error, hasMore, loadMore, sortOrder, changeSortOrder };
-};
+  return {
+    mangas,
+    isLoading,
+    isFirstLoad,
+    error,
+    hasMore,
+    loadMore: loadMoreMangas,
+    sortOrder,
+    setSortOrder,
+    contentRating,
+    setContentRating,
+    tags,
+    setTags,
+    publicationStatus,
+    setPublicationStatus,
+    resetAndLoad,
+    isResetting
+  };
+}
