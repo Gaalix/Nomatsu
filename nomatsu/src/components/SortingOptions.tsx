@@ -8,7 +8,8 @@ interface SortingOptionsProps {
   contentRating: string[];
   tags: Record<string, number>;
   publicationStatus: string;
-  onSortingChange: (sortOrder: SortOrder, contentRating: string[], tags: Record<string, number>, publicationStatus: string) => void;
+  language: string;
+  onSortingChange: (sortOrder: SortOrder, contentRating: string[], tags: Record<string, number>, publicationStatus: string, language: string) => void;
   isVisible: boolean;
 }
 
@@ -23,11 +24,19 @@ const sortOrderOptions: { value: SortOrder; label: string }[] = [
   { value: 'title', label: 'Title' },
 ];
 
-const SortingOptions: React.FC<SortingOptionsProps> = ({ sortOrder, contentRating, tags, publicationStatus, onSortingChange, isVisible }) => {
+export const languageOptions = [
+  { value: 'en', label: 'English' },
+  { value: 'ja', label: 'Japanese' },
+  { value: 'ko', label: 'Korean' },
+  { value: 'zh', label: 'Chinese' },
+];
+
+const SortingOptions: React.FC<SortingOptionsProps> = ({ sortOrder, contentRating, tags, publicationStatus, language, onSortingChange, isVisible }) => {
   const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrder);
   const [localContentRating, setLocalContentRating] = useState(contentRating);
   const [localTags, setLocalTags] = useState(tags);
   const [localPublicationStatus, setLocalPublicationStatus] = useState(publicationStatus);
+  const [localLanguage, setLocalLanguage] = useState(language);
 
   const handleSortOrderChange = (newSortOrder: SortOrder) => {
     setLocalSortOrder(newSortOrder);
@@ -57,12 +66,17 @@ const SortingOptions: React.FC<SortingOptionsProps> = ({ sortOrder, contentRatin
     setLocalPublicationStatus(newStatus);
   };
 
+  const handleLanguageChange = (newLanguage: string) => {
+    setLocalLanguage(newLanguage);
+  };
+
   const handleApply = () => {
     onSortingChange(
       localSortOrder,
       localContentRating,
       localTags,
-      localPublicationStatus
+      localPublicationStatus,
+      localLanguage
     );
   };
 
@@ -129,6 +143,15 @@ const SortingOptions: React.FC<SortingOptionsProps> = ({ sortOrder, contentRatin
                 ))}
               </Stack>
             </RadioGroup>
+          </Box>
+
+          <Box>
+            <Text fontWeight="bold" mb={2}>Language</Text>
+            <Select value={localLanguage} onChange={(e) => handleLanguageChange(e.target.value)}>
+              {languageOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Select>
           </Box>
 
           <Button colorScheme="blue" onClick={handleApply}>Apply Changes</Button>

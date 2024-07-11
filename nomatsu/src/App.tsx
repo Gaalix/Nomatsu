@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import MangaList from './components/MangaList';
+import Library from './components/Library';
 import SetupWizard from './components/SetupWizard';
 import { Box, Flex, IconButton, Spacer, Tooltip, useColorModeValue } from '@chakra-ui/react';
 import { SearchIcon, TimeIcon, SettingsIcon } from '@chakra-ui/icons';
@@ -63,7 +64,8 @@ function App() {
           </Flex>
           <Box as="main">
             {currentView === 'browse' && <MangaList />}
-            {/* Add other components for library, history, and settings views */}
+            {currentView === 'library' && <Library />}
+            {/* Add other components for history and settings views */}
           </Box>
         </>
       )}

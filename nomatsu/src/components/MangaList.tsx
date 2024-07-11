@@ -1,36 +1,67 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Box, Button, Grid, Image, Text, Spinner, Tooltip, IconButton, useColorModeValue, VStack, Heading, Flex } from '@chakra-ui/react';
-import { ArrowUpIcon } from '@chakra-ui/icons';
+import {
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Image,
+  Text,
+  Spinner,
+  Tooltip,
+  IconButton,
+  useColorModeValue,
+  VStack,
+  Heading,
+  Input,
+  Badge,
+  ScaleFade,
+  Collapse,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  Icon,
+} from '@chakra-ui/react';
+import { ArrowUpIcon, SearchIcon, StarIcon } from '@chakra-ui/icons';
 import { Manga } from '../types/Manga';
 import { useMangaList } from '../hooks/useMangaList';
 import MangaDetails from './MangaDetails';
-import SortingOptions from './SortingOptions';
 import { SortOrder } from '../api/mangaApi';
 import { useInView } from 'react-intersection-observer';
+import SortingOptions, { languageOptions } from './SortingOptions';
+import ReactCountryFlag from "react-country-flag";
+import { useLibrary } from '../hooks/useLibrary';
+import { BiBook } from 'react-icons/bi';
 
 const MangaList: React.FC = () => {
-  const { 
-    mangas, 
-    isLoading, 
-    isFirstLoad, 
-    error, 
-    hasMore, 
-    loadMore, 
-    sortOrder, 
-    setSortOrder, 
-    contentRating, 
-    setContentRating, 
-    tags, 
-    setTags, 
-    publicationStatus, 
-    setPublicationStatus, 
+  const {
+    mangas,
+    isLoading,
+    isFirstLoad,
+    error,
+    hasMore,
+    loadMore,
+    sortOrder,
+    setSortOrder,
+    contentRating,
+    setContentRating,
+    tags,
+    setTags,
+    publicationStatus,
+    setPublicationStatus,
     resetAndLoad,
-    isResetting
+    isResetting,
+    language,
+    setLanguage
   } = useMangaList();
-
+  const { isInLibrary } = useLibrary();
   const [selectedManga, setSelectedManga] = useState<Manga | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showSortingOptions, setShowSortingOptions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
 
@@ -44,17 +75,18 @@ const MangaList: React.FC = () => {
     }
   }, [inView, isLoading, hasMore, loadMore]);
 
-  const handleSortingChange = (newSortOrder: SortOrder, newContentRating: string[], newTags: Record<string, number>, newPublicationStatus: string) => {
+  const handleSortingChange = (newSortOrder: SortOrder, newContentRating: string[], newTags: Record<string, number>, newPublicationStatus: string, newLanguage: string) => {
     setSortOrder(newSortOrder);
     setContentRating(newContentRating);
     setTags(newTags);
     setPublicationStatus(newPublicationStatus);
+    setLanguage(newLanguage);
     setShowSortingOptions(false);
   };
 
   useEffect(() => {
     resetAndLoad();
-  }, [sortOrder, contentRating, tags, publicationStatus]);
+  }, [sortOrder, contentRating, tags, publicationStatus, language]);
 
   const toggleSortingOptions = () => setShowSortingOptions(!showSortingOptions);
 
@@ -92,26 +124,49 @@ const MangaList: React.FC = () => {
     };
   }, []);
 
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const cardBgColor = useColorModeValue('white', 'gray.800');
+
   return (
-    <Box height="calc(100vh - 60px)">
+    <Box height="calc(100vh - 60px)" bg={bgColor}>
       {!selectedManga && (
-        <Box mb={4}>
-          <Button onClick={toggleSortingOptions}>
-            {showSortingOptions ? 'Hide Sorting Options' : 'Show Sorting Options'}
-          </Button>
-          <Box maxHeight="400px" overflowY="auto">
-            <SortingOptions
-              sortOrder={sortOrder}
-              contentRating={contentRating}
-              tags={tags}
-              publicationStatus={publicationStatus}
-              onSortingChange={handleSortingChange}
-              isVisible={showSortingOptions}
-            />
-          </Box>
+        <Box mb={2} p={2}>
+          <Flex justifyContent="space-between" alignItems="center" mb={2}>
+            <Heading size="md">{getSortOrderLabel(sortOrder)}</Heading>
+            <Flex>
+              <Button onClick={toggleSortingOptions} size="sm" mr={2}>
+                {showSortingOptions ? 'Hide Filters' : 'Show Filters'}
+              </Button>
+              <Input
+                placeholder="Search manga..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                width="200px"
+                size="sm"
+              />
+            </Flex>
+          </Flex>
+          <Modal isOpen={showSortingOptions} onClose={toggleSortingOptions} size="full">
+            <ModalOverlay />
+            <ModalContent maxWidth="90vw" maxHeight="90vh">
+              <ModalHeader>Sorting Options</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody overflowY="auto">
+                <SortingOptions
+                  sortOrder={sortOrder}
+                  contentRating={contentRating}
+                  tags={tags}
+                  publicationStatus={publicationStatus}
+                  language={language}
+                  onSortingChange={handleSortingChange}
+                  isVisible={showSortingOptions}
+                />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
         </Box>
       )}
-      <Box ref={listRef} height={selectedManga ? "100%" : "calc(100% - 60px)"}>
+      <Box ref={listRef} height="100%" overflowY="auto">
         {selectedManga ? (
           <MangaDetails manga={selectedManga} onClose={handleClose} />
         ) : (
@@ -129,33 +184,67 @@ const MangaList: React.FC = () => {
                 </Button>
               </Box>
             ) : mangas.length > 0 ? (
-              <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6} mt={4}>
+              <Grid templateColumns="repeat(3, 1fr)" gap={4} p={2}>
                 {mangas.map((manga, index) => (
-                  <Box 
-                    key={manga.id} 
-                    onClick={() => handleMangaClick(manga)}
-                    cursor="pointer"
-                    transition="transform 0.2s"
-                    _hover={{ transform: 'scale(1.05)' }}
-                    height="350px"
-                    display="flex"
-                    flexDirection="column"
-                    ref={index === mangas.length - 1 ? lastMangaElementRef : null}
-                  >
-                    <Image 
-                      src={manga.coverArt} 
-                      alt={manga.title} 
-                      objectFit="cover" 
-                      height="280px" 
-                      width="100%" 
-                      borderRadius="md" 
-                    />
-                    <Box mt={2} height="70px" overflow="hidden">
-                      <Heading as="h3" size="sm" noOfLines={2}>
-                        {manga.title}
-                      </Heading>
+                  <ScaleFade in={true} key={manga.id}>
+                    <Box
+                      onClick={() => handleMangaClick(manga)}
+                      cursor="pointer"
+                      borderWidth={1}
+                      borderRadius="lg"
+                      overflow="hidden"
+                      bg={cardBgColor}
+                      boxShadow="md"
+                      transition="all 0.2s"
+                      _hover={{ transform: 'scale(1.02)', boxShadow: 'lg' }}
+                      ref={index === mangas.length - 1 ? lastMangaElementRef : null}
+                      borderColor={isInLibrary(manga.id) ? 'blue.500' : 'transparent'}
+                      position="relative"
+                    >
+                      {isInLibrary(manga.id) && (
+                        <Box
+                          position="absolute"
+                          top={2}
+                          left={2}
+                          bg="blue.500"
+                          color="white"
+                          borderRadius="full"
+                          p={1}
+                        >
+                          <BiBook />
+                        </Box>
+                      )}
+                      <Flex position="relative" height="150px">
+                        <Image
+                          src={manga.coverArt}
+                          alt={manga.title}
+                          objectFit="cover"
+                          width="100px"
+                          height="150px"
+                        />
+                        <Box p={2} flex={1} display="flex" flexDirection="column">
+                          <Heading as="h3" size="sm" noOfLines={2} mb={2} alignSelf="flex-start">
+                            {manga.title}
+                          </Heading>
+                          <VStack align="flex-start" spacing={1} flex={1}>
+                            <Text fontSize="xs" color="gray.500">
+                              {manga.author}
+                            </Text>
+                            <Flex alignItems="center">
+                              <ReactCountryFlag
+                                countryCode={manga.language === 'en' ? 'US' : manga.language.toUpperCase()}
+                                svg
+                                style={{ width: '1em', height: '1em', marginRight: '0.5em' }}
+                              />
+                              <Text fontSize="xs">
+                                Latest: Ch. {manga.latestChapter}
+                              </Text>
+                            </Flex>
+                          </VStack>
+                        </Box>
+                      </Flex>
                     </Box>
-                  </Box>
+                  </ScaleFade>
                 ))}
               </Grid>
             ) : (
@@ -183,13 +272,32 @@ const MangaList: React.FC = () => {
             right="20px"
             colorScheme="blue"
             onClick={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
         </Tooltip>
       )}
     </Box>
   );
+};
+
+const getSortOrderLabel = (sortOrder: SortOrder): string => {
+  switch (sortOrder) {
+    case 'latestUploadedChapter':
+      return 'Latest Uploads';
+    case 'followedCount':
+      return 'Most Popular';
+    case 'relevance':
+      return 'Relevant Manga';
+    case 'createdAt':
+      return 'Recently Added';
+    case 'updatedAt':
+      return 'Recently Updated';
+    case 'title':
+      return 'Manga by Title';
+    default:
+      return 'Manga List';
+  }
 };
 
 export default MangaList;

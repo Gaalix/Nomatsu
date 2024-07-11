@@ -12,6 +12,7 @@ export const useMangaList = () => {
   const [contentRating, setContentRating] = useState<string[]>(['safe']);
   const [tags, setTags] = useState<Record<string, number>>({});
   const [publicationStatus, setPublicationStatus] = useState<string>('ongoing');
+  const [language, setLanguage] = useState<string>('en');
   const cachedMangas = useRef<Record<string, Manga[]>>({});
   const lastFetchTime = useRef<number>(0);
   const isMounted = useRef(true);
@@ -41,6 +42,7 @@ export const useMangaList = () => {
       const currentContentRating = contentRating;
       const currentTags = tags;
       const currentPublicationStatus = publicationStatus;
+      const currentLanguage = language;
 
       try {
         const newMangas = await fetchMangaList(
@@ -49,7 +51,8 @@ export const useMangaList = () => {
           currentSortOrder,
           currentContentRating,
           currentTags,
-          currentPublicationStatus
+          currentPublicationStatus,
+          currentLanguage
         );
 
         if (isMounted.current) {
@@ -74,7 +77,7 @@ export const useMangaList = () => {
     };
 
     fetchData();
-  }, [offset, sortOrder, contentRating, tags, publicationStatus, hasMore, isLoading]);
+  }, [offset, sortOrder, contentRating, tags, publicationStatus, hasMore, isLoading, language]);
 
   const resetAndLoad = useCallback(() => {
     setIsResetting(true);
@@ -86,7 +89,7 @@ export const useMangaList = () => {
     cachedMangas.current = {}; // Clear the cache
 
     // Immediately trigger a new fetch
-    fetchMangaList(0, 20, sortOrder, contentRating, tags, publicationStatus)
+    fetchMangaList(0, 20, sortOrder, contentRating, tags, publicationStatus, language)
       .then((newMangas) => {
         setMangas(newMangas);
         setOffset(20);
@@ -103,7 +106,7 @@ export const useMangaList = () => {
         setIsLoading(false);
         setIsResetting(false);
       });
-  }, [sortOrder, contentRating, tags, publicationStatus]);
+  }, [sortOrder, contentRating, tags, publicationStatus, language]);
 
   useEffect(() => {
     if (isFirstLoad && !initialLoadTriggered.current) {
@@ -129,6 +132,8 @@ export const useMangaList = () => {
     publicationStatus,
     setPublicationStatus,
     resetAndLoad,
-    isResetting
+    isResetting,
+    language,
+    setLanguage
   };
 }
