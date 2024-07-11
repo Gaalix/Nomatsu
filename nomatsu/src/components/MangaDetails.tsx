@@ -18,10 +18,12 @@ import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 import { MangaDetailsProps } from '../types/MangaDetailsProps';
 import { fetchMangaChapters } from '../api/mangaApi';
 import { useLibrary } from '../hooks/useLibrary';
+import MangaReader from './MangaReader';
 
 const MangaDetails: React.FC<MangaDetailsProps> = ({ manga, onClose }) => {
   const [chapters, setChapters] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
   const { isInLibrary, addToLibrary, removeFromLibrary } = useLibrary();
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -63,6 +65,18 @@ const MangaDetails: React.FC<MangaDetailsProps> = ({ manga, onClose }) => {
       });
     }
   };
+
+  const handleChapterClick = (chapterId: string) => {
+    setSelectedChapter(chapterId);
+  };
+
+  if (selectedChapter) {
+    return (
+      <Box position="fixed" top={0} left={0} right={0} bottom={0} zIndex={20}>
+        <MangaReader mangaId={manga.id} chapterId={selectedChapter} onClose={() => setSelectedChapter(null)} />
+      </Box>
+    );
+  }
 
   return (
     <Box bg={bgColor} color={textColor} p={4} borderRadius="lg" boxShadow="xl">
@@ -134,6 +148,7 @@ const MangaDetails: React.FC<MangaDetailsProps> = ({ manga, onClose }) => {
                 borderRadius="md"
                 _hover={{ bg: hoverBgColor }}
                 cursor="pointer"
+                onClick={() => handleChapterClick(chapter.id)}
               >
                 <Flex justifyContent="space-between" alignItems="center">
                   <Text fontWeight="bold">
