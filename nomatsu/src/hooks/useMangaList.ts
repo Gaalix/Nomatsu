@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Manga } from '../types/Manga';
 import { fetchMangaList, SortOrder } from '../api/mangaApi';
+import { debounce } from 'lodash';
 
 export const useMangaList = () => {
   const [mangas, setMangas] = useState<Manga[]>([]);
@@ -20,6 +21,29 @@ export const useMangaList = () => {
   const [isResetting, setIsResetting] = useState(false);
   const initialLoadTriggered = useRef(false);
   const lastOptions = useRef('');
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Manga[]>([]);
+
+  const handleSearch = useCallback(
+    debounce(async (query: string) => {
+      if (query.length >= 2) {
+        try {
+          const results = await fetchMangaList(0, 20, sortOrder, contentRating, tags, publicationStatus, language, query);
+          setSearchResults(results);
+        } catch (error) {
+          console.error('Error searching manga:', error);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300),
+    [sortOrder, contentRating, tags, publicationStatus, language]
+  );
+
+  useEffect(() => {
+    handleSearch(searchQuery);
+  }, [searchQuery, handleSearch]);
 
   useEffect(() => {
     console.log('useMangaList mounted');
@@ -134,6 +158,9 @@ export const useMangaList = () => {
     resetAndLoad,
     isResetting,
     language,
-    setLanguage
+    setLanguage,
+    searchQuery,
+    setSearchQuery,
+    searchResults
   };
 }

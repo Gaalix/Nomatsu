@@ -9,7 +9,7 @@ export type SortOrder =
   | 'updatedAt'
   | 'title';
 
-const API_BASE_URL = 'https://api.mangadex.dev';
+const API_BASE_URL = '';
 
 const getCoverArt = (mangaId: string, relationships: any[]): string => {
   const coverArt = relationships.find(rel => rel.type === 'cover_art');
@@ -41,7 +41,8 @@ export const fetchMangaList = async (
   contentRating: string[],
   tags: Record<string, number>,
   publicationStatus: string,
-  language: string
+  language: string,
+  searchQuery?: string
 ): Promise<Manga[]> => {
   try {
     const params = new URLSearchParams();
@@ -88,6 +89,10 @@ export const fetchMangaList = async (
       }
     });
 
+    if (searchQuery) {
+      params.append('title', searchQuery);
+    }
+
     const response = await axios.get(`${API_BASE_URL}/manga`, { params });
 
     return response.data.data.map((manga: any) => ({
@@ -119,10 +124,10 @@ export const fetchMangaChapters = async (mangaId: string, language: string): Pro
     const params = new URLSearchParams({
       'translatedLanguage[]': language,
       'order[chapter]': 'asc',
-      'limit': '500', // Adjust this value based on your needs
+      'limit': '500',
     });
 
-    const response = await axios.get(`${API_BASE_URL}/manga/${mangaId}/feed`, { params });
+    const response = await axios.get(`/manga/${mangaId}/feed`, { params });
     return response.data.data;
   } catch (error) {
     console.error('Error fetching manga chapters:', error);
