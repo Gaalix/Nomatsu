@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Flex,
@@ -8,6 +8,7 @@ import {
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import axios from 'axios';
+import { Image } from '@chakra-ui/react';
 
 interface MangaReaderProps {
   mangaId: string;
@@ -22,6 +23,7 @@ const MangaReader: React.FC<MangaReaderProps> = ({ mangaId, chapterId, onClose }
   const [showMenu, setShowMenu] = useState(true);
   const readerRef = useRef<HTMLDivElement>(null);
   const lastScrollTop = useRef(0);
+  const [imageWidth, setImageWidth] = useState('auto');
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -46,7 +48,7 @@ const MangaReader: React.FC<MangaReaderProps> = ({ mangaId, chapterId, onClose }
     fetchChapterPages();
   }, [chapterId]);
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (readerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = readerRef.current;
       const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
@@ -61,7 +63,27 @@ const MangaReader: React.FC<MangaReaderProps> = ({ mangaId, chapterId, onClose }
       }
       lastScrollTop.current = scrollTop;
     }
-  };
+  }, [pages.length]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const aspectRatio = viewportWidth / viewportHeight;
+
+      if (aspectRatio > 1) {
+        // Landscape orientation
+        setImageWidth('auto');
+      } else {
+        // Portrait orientation
+        setImageWidth('100%');
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <Box height="100vh" width="100vw" bg={bgColor} position="relative">
@@ -116,16 +138,21 @@ const MangaReader: React.FC<MangaReaderProps> = ({ mangaId, chapterId, onClose }
         onScroll={handleScroll}
       >
         {pages.map((pageUrl, index) => (
-          <Box key={index} width="100%" display="flex" justifyContent="center" position="relative">
-            <img 
-              src={pageUrl} 
-              alt={`Page ${index + 1}`} 
-              style={{ 
-                maxWidth: '100%', 
-                height: 'auto', 
-                display: 'block',
-                margin: '0 auto'
-              }} 
+          <Box 
+            key={index} 
+            width="100%" 
+            display="flex" 
+            justifyContent="center" 
+            alignItems="center"
+          >
+            <Image
+              src={pageUrl}
+              alt={`Page ${index + 1}`}
+              width={imageWidth}
+              height="auto"
+              maxHeight="100vh"
+              objectFit="contain"
+              loading="lazy"
             />
           </Box>
         ))}
